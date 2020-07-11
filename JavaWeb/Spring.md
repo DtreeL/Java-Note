@@ -25,6 +25,8 @@ Spring的核心就是提供了一个IoC容器
 
 - 可以管理所有轻量级的JavaBean组件
 - 提供的底层服务包括组件的生命周期管理、配置和组装服务、AOP支持，以及建立在AOP基础上的声明式事务服务等。
+-  **IoC 容器实际上就是个Map（key，value）,Map 中存放的是各种对象。**
+- IoC Container在进行这个工作的时候是反过来的，它先从最上层开始往下找依赖关系，到达最底层之后再往上一步一步new（有点像深度优先遍历）：
 
 ## IoC原理
 
@@ -115,10 +117,12 @@ Spring还提供另一种IoC容器叫`BeanFactory`，使用方式和`ApplicationC
 >
 > - 优点是所有的Bean都能一目了然地列出来，并通过配置注入能直观地看到每个Bean的依赖。
 > - 缺点是写起来非常繁琐，每增加一个组件，就必须把新的Bean配置到XML中。
+>
+> 使用Annotation配置，可以完全不需要XML，让Spring自动扫描Bean并组装它们。
 
-`@Component`注解就相当于定义了一个Bean，默认小写开头类名
+`@Component`注解就相当于**定义了一个Bean**，默认小写开头类名
 
-`@Autowired`相当于指定类型的Bean注入到指定的字段中
+`@Autowired`相当于**指定类型的Bean注入到指定的字段中**
 
 - 不但可以写在`set()`方法上，还可以直接写在字段上，甚至可以写在构造方法中
 
@@ -132,7 +136,7 @@ ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.cl
 
 - 使用的实现类是`AnnotationConfigApplicationContext`，必须传入一个标注了`@Configuration`的类名。
 
-`@ComponentScan`，它告诉容器，自动搜索当前类所在的包以及子包，把所有标注为`@Component`的Bean自动创建出来，并根据`@Autowired`进行装配
+`@ComponentScan`，它**告诉容器，自动搜索当前类所在的包以及子包，把所有标注为`@Component`的Bean自动创建出来，并根据`@Autowired`进行装配**
 
 ## 定制Bean
 
@@ -257,31 +261,7 @@ Spring为应用程序准备了Profile这一概念，用来表示不同的环境�
 
 创建某个Bean时，Spring容器可以根据注解`@Profile`来决定是否创建。
 
-# Spring Bean的生命周期
 
-Bean 的生命周期概括起来就是 **4 个阶段**：
-
-1. 实例化（Instantiation）；
-2. 属性赋值（Populate）；
-3. 初始化（Initialization）；
-4. 销毁（Destruction）。
-
-![](https://mmbiz.qpic.cn/sz_mmbiz_png/8gSYd924hdtaiacv70zFygFQWuROmn641xfRVSRLibjDAL7zpiasx3UI2NACX2re5Ay4hP3bsoNiaTgtCGMNpjnqUA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)
-
-1. 实例化：第 1 步，实例化一个 bean 对象；
-2. 属性赋值：第 2 步，为 bean 设置相关属性和依赖；
-3. 初始化：第 3~7 步，步骤较多，其中第 5、6 步为初始化操作，第 3、4 步为在初始化前执行，第 7 步在初始化后执行，该阶段结束，才能被用户使用；
-4. 销毁：第 8~10步，第8步不是真正意义上的销毁（还没使用呢），而是先在使用前注册了销毁的相关调用接口，为了后面第9、10步真正销毁 bean 时再执行相应的方法。
-
-初始化
-
-- 若 Spring 检测到 bean 实现了 Aware 接口，则会为其注入相应的依赖。所以**通过让bean 实现 Aware 接口，则能在 bean 中获得相应的 Spring 容器资源**。
-
-  Spring 中提供的 Aware 接口有：
-
-  1. BeanNameAware：注入当前 bean 对应 beanName；
-  2. BeanClassLoaderAware：注入加载当前 bean 的 ClassLoader；
-  3. BeanFactoryAware：注入 当前BeanFactory容器 的引用。
 
 # AOP
 
@@ -324,9 +304,9 @@ OOP把系统看作多个对象的交互，AOP把系统分解为不同的关注�
 cglib代理也叫子类代理，**从内存中构建出一个子类来扩展目标对象的功能**
 
 -  Spring对接口类型使用JDK动态代理，对普通类使用CGLIB创建子类。如果一个Bean的class是final，Spring将无法为其创建子类。
-  - CGLib代理对象运行速度要比JDK的代理对象要快
+   - CGLib代理对象运行速度要比JDK的代理对象要快
 
-- 是**单例的最好使用CGLib代理**，如果是多例的最好使用JDK代理
+-  是**单例的最好使用CGLib代理**，如果是多例的最好使用JDK代理
 
 以`LoggingAspect.doAccessCheck()`为例，要把它注入到`UserService`的每个`public`方法中，最简单的方法是编写一个子类，并持有原始实例的引用：
 
@@ -476,3 +456,162 @@ Spring为了同时支持JDBC和JTA两种事务模型，就抽象出`PlatformTran
 Spring提供的是一个IoC容器，所有的Bean，包括Controller，都在Spring IoC容器中被初始化，
 
 而Servlet容器由JavaEE服务器提供（如Tomcat），Servlet容器对Spring一无所知，他们之间到底依靠什么进行联系，又是以何种顺序初始化的？
+
+# 原理
+
+## Spring Bean的生命周期
+
+Bean 的生命周期概括起来就是 **4 个阶段**：
+
+1. 实例化（Instantiation）；
+2. 属性赋值（Populate）；
+3. 初始化（Initialization）；
+4. 销毁（Destruction）。
+
+![](https://mmbiz.qpic.cn/sz_mmbiz_png/8gSYd924hdtaiacv70zFygFQWuROmn641xfRVSRLibjDAL7zpiasx3UI2NACX2re5Ay4hP3bsoNiaTgtCGMNpjnqUA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)
+
+1. 实例化：第 1 步，实例化一个 bean 对象；
+2. 属性赋值：第 2 步，为 bean 设置相关属性和依赖；
+3. 初始化：第 3~7 步，步骤较多，其中第 5、6 步为初始化操作，第 3、4 步为在初始化前执行，第 7 步在初始化后执行，该阶段结束，才能被用户使用；
+4. 销毁：第 8~10步，第8步不是真正意义上的销毁（还没使用呢），而是先在使用前注册了销毁的相关调用接口，为了后面第9、10步真正销毁 bean 时再执行相应的方法。
+
+初始化
+
+- 若 Spring 检测到 bean 实现了 Aware 接口，则会为其注入相应的依赖。所以**通过让bean 实现 Aware 接口，则能在 bean 中获得相应的 Spring 容器资源**。
+
+  Spring 中提供的 Aware 接口有：
+
+  1. BeanNameAware：注入当前 bean 对应 beanName；
+  2. BeanClassLoaderAware：注入加载当前 bean 的 ClassLoader；
+  3. BeanFactoryAware：注入 当前BeanFactory容器 的引用。
+
+1、解析、定位、加载xml配置文件；
+
+2、提取配置文件内容；
+
+3、新建bean工厂；
+
+4、创建Bean定义，并放入map中存储。
+
+## Bean的作用域和生命周期
+
+- singleton : 唯一 bean 实例，Spring 中的 bean 默认都是单例的。
+- prototype : 每次请求都会创建一个新的 bean 实例。
+- request : 每一次HTTP请求都会产生一个新的bean，该bean仅在当前HTTP request内有效。
+- session : 每一次HTTP请求都会产生一个新的 bean，该bean仅在当前 HTTP session 内有效。
+
+单例 bean 存在线程问题，主要是因为当多个线程操作同一个对象的时候，对这个对象的非静态成员变量的写操作会存在线程安全问题。
+
+# IOC源码分析
+
+```java
+ApplicationContext context = new ClassPathXmlApplicationContext("classpath:applicationfile.xml");
+```
+
+- **FileSystemXmlApplicationContext**
+- **AnnotationConfigApplicationContext**
+- **ClassPathXmlApplicationContext**
+
+ApplicationContext 启动过程中，会负责创建实例 Bean，往各个 Bean 中注入依赖等。
+
+## BeanFactory
+
+生产 bean 的工厂，它负责生产和管理各个 bean 实例。
+
+ApplicationContext 其实就是一个 BeanFactory
+
+- ApplicationContext 继承了 ListableBeanFactory，这个 Listable 的意思就是，通过这个接口，我们可以获取多个 Bean
+- ApplicationContext 继承了 HierarchicalBeanFactory，Hierarchical 单词本身已经能说明问题了，也就是说我们可以在应用中起多个 BeanFactory，然后可以将各个 BeanFactory 设置为父子关系。
+- AutowireCapableBeanFactory 这个名字中的 Autowire 大家都非常熟悉，它就是用来自动装配 Bean 用的
+
+## 启动过程分析
+
+ClassPathXmlApplicationContext 的构造方法
+
+- ```java
+  // 如果已经有 ApplicationContext 并需要配置成父子关系，那么调用这个构造方法
+    public ClassPathXmlApplicationContext(ApplicationContext parent) {
+      super(parent);
+    }
+  
+  public ClassPathXmlApplicationContext(String[] configLocations, boolean refresh, ApplicationContext parent)
+        throws BeansException {
+  
+      super(parent);
+      // 根据提供的路径，处理成配置文件数组(以分号、逗号、空格、tab、换行符分割)
+      setConfigLocations(configLocations);
+      if (refresh) {
+        refresh(); // 核心方法
+      }
+    }
+      ...
+  }
+  ```
+
+- refresh()方法
+
+  ```java
+  // ApplicationContext 建立起来以后，其实我们是可以通过调用 refresh() 这个方法重建的，refresh() 会将原来的 ApplicationContext 销毁，然后再重新执行一次初始化操作。
+  
+  // 准备工作，记录下容器的启动时间、标记“已启动”状态、处理配置文件中的占位符
+        prepareRefresh();
+  
+  // 这步比较关键，这步完成后，配置文件就会解析成一个个 Bean 定义，注册到 BeanFactory 中，
+  // 当然，这里说的 Bean 还没有初始化，只是配置信息都提取出来了，
+   // 注册也只是将这些信息都保存到了注册中心(说到底核心是一个 beanName-> beanDefinition 的 map)
+  ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
+  
+  
+  
+  // 初始化所有的 singleton beans
+  //（lazy-init 的除外）
+  finishBeanFactoryInitialization(beanFactory);
+  ```
+
+- obtainFreshBeanFactory()：初始化 BeanFactory、加载 Bean、注册 Bean 等等，Bean 实例并未在这一步生成
+
+- BeanDefinition 就是我们所说的 Spring 的 Bean，我们自己定义的各个 Bean 其实会转换成一个个 BeanDefinition 存在于 Spring 的 BeanFactory 中。Bean 在代码层面上可以简单认为是 BeanDefinition 的实例。
+
+- **Spring IoC的初始化过程：**
+
+  ![Spring IoC的初始化过程](https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-7/SpringIOC%E5%88%9D%E5%A7%8B%E5%8C%96%E8%BF%87%E7%A8%8B.png)
+
+  # 事务
+
+  管理事务的方式
+
+  1. 编程式事务，在代码中硬编码。(不推荐使用)
+  2. 声明式事务，在配置文件中配置（推荐使用）
+
+  声明式事务又分
+
+  1. 基于XML的声明式事务
+
+  2. 基于注解的声明式事务
+
+  ## Spring事务的隔离级别
+
+  - **TransactionDefinition.ISOLATION_DEFAULT:** **使用后端数据库默认的隔离级别**，Mysql 默认采用的 REPEATABLE_READ隔离级别 Oracle 默认采用的 READ_COMMITTED隔离级别.
+  - **TransactionDefinition.ISOLATION_READ_UNCOMMITTED:** 最低的隔离级别，允许读取尚未提交的数据变更，**可能会导致脏读、幻读或不可重复读**
+  - **TransactionDefinition.ISOLATION_READ_COMMITTED:** 允许读取并发事务已经提交的数据，**可以阻止脏读，但是幻读或不可重复读仍有可能发生**
+  - **TransactionDefinition.ISOLATION_REPEATABLE_READ:** 对同一字段的多次读取结果都是一致的，除非数据是被本身事务自己所修改，**可以阻止脏读和不可重复读，但幻读仍有可能发生。**
+  - **TransactionDefinition.ISOLATION_SERIALIZABLE:** 最高的隔离级别，完全服从ACID的隔离级别。所有的事务依次逐个执行，这样事务之间就完全不可能产生干扰，也就是说，**该级别可以防止脏读、不可重复读以及幻读**。但是这将严重影响程序的性能。通常情况下也不会用到该级别。
+
+  ## 事务传播方式
+
+  **支持当前事务的情况：**
+
+  - **TransactionDefinition.PROPAGATION_REQUIRED：** 如果当前存在事务，则加入该事务；如果当前没有事务，则创建一个新的事务。
+  - **TransactionDefinition.PROPAGATION_SUPPORTS：** 如果当前存在事务，则加入该事务；如果当前没有事务，则以非事务的方式继续运行。
+  - **TransactionDefinition.PROPAGATION_MANDATORY：** 如果当前存在事务，则加入该事务；如果当前没有事务，则抛出异常。（mandatory：强制性）
+
+  **不支持当前事务的情况：**
+
+  - **TransactionDefinition.PROPAGATION_REQUIRES_NEW：** 创建一个新的事务，如果当前存在事务，则把当前事务挂起。
+  - **TransactionDefinition.PROPAGATION_NOT_SUPPORTED：** 以非事务方式运行，如果当前存在事务，则把当前事务挂起。
+  - **TransactionDefinition.PROPAGATION_NEVER：** 以非事务方式运行，如果当前存在事务，则抛出异常。
+
+  **其他情况：**
+
+  - **TransactionDefinition.PROPAGATION_NESTED：** 如果当前存在事务，则创建一个事务作为当前事务的嵌套事务来运行；如果当前没有事务，则该取值等价于TransactionDefinition.PROPAGATION_REQUIRED。
+
