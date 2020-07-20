@@ -444,3 +444,100 @@ html页面放在classpath(resoures下)的templates文件夹里，就能自动渲
 
 ## SpringMVC自动配置
 
+WebMvcAutoConfiguration
+
+扩展Spring MVC
+
+- 配置类实现WebMvcConfiguration
+- 配置类会一起起作用
+
+# 国际化
+
+1. 国际化配置文件properties(默认)
+   - xxx_zh_CN.properties
+   - xxx_en_US.properties
+
+2. SpringBoot自动配置好了管理国际化资源的组件
+
+   ```
+   public class MessageSourceAutoConfiguration
+   ```
+
+3. 页面获取国际化配置的值
+4. 通过链接切换语言
+   - 超链接携带请求参数?Locale="zh_CN"
+   - 编写解析器类：实现LocaleResolver，实现方法中获得参数，处理后创建Locale返回
+
+# 拦截器
+
+实现HandlerInterceptor
+
+# 修改Tomcat
+
+ServerProperties
+
+# 整合数据
+
+SpringBoot底层使用Spring Data（无论关系型还是非关系型）都能操作
+
+# 缓存
+
+JSR-107：缓存规范，只有接口，不是所有缓存都提供了JSR1.7的实现
+
+- CachingProvider：创建配置获取管理控制多个CacheManager（一对多）
+- CacheManager：创建配置获取管理控制多个唯一命名的Cache（一对多）
+- Cache：类似于Map
+  - Entry：存在Cache中的一个键值对
+  - Expire：Entry的有效期
+
+Spring缓存抽象（默认ConcurrentMapCache，保存在ConcurrentHashMap）
+
+- 保留了Cache（Spring提供了各种XxxCache实现类）、CacheManager
+
+注解
+
+- @EnableCaching
+
+- @Cacheable：先看缓存，将方法的结果进行缓存，再获取相同的数据就从缓存中取不运行方法
+
+  - cacheName/value：每一个缓存组件有自己的名字。指定存在名字为什么的Map中
+
+  - key：**默认方法参数的值**，方法参数为key，返回值为值。key=#id意思是取出参数id的值作为key
+
+    ```java
+    #root.methodName:取方法名
+    #result:返回值
+    #root.args[0]:取方法的第一个参数
+    #参数名
+    ```
+
+- @CacheEvict：按key删除，**执行之后删除缓存**，出现异常则不会清除
+
+  - beforeInvocation=true，执行前清除缓存，不管运不运行都清除
+
+- @CachePut：先调用方法后把结果放入缓存，适用于修改
+
+  ```java
+  搜索使用id作为参数，缓存的key是id值
+      
+  那么更新需要指定key为传入的对象的id
+  #参数名.id
+  #result.id：因为返回的对象与更新的对象是一个对象，id相等
+  ```
+
+  @Caching：指定多个缓存规则：按照名字、邮件都能查到缓存
+
+  @CacheConfig：抽取缓存的公共配置
+
+keyGenerator：缓存数据时key的生成策略
+
+serialize：缓存数据时value序列化的策略
+
+## Redis
+
+1. 引入start，自动配置就生效了，引入了RedisTemplate(k-v都是Object)，StringRedisTemplate
+2. 配置redis，spring.redis.host=
+3. 保存在Redis的对象默认序列化
+   - 转换为json：1. 自己把对象转为Json再保存 2. 改变默认的序列化规则
+
+# 消息
