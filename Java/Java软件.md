@@ -4,9 +4,9 @@
 
 下载地址：https://www.oracle.com/java/technologies/javase-downloads.html
 
-- #### 在Java Archive找早期版本
+- #### 在Java Archive中找早期版本
 
-- #### Java SE Development Kit 8u202，Windows x64，jdk-8u202-windows-x64.exe（需要登录）
+- #### Java SE Development Kit 8u202，Windows x64，jdk-8u202-windows-x64.exe（可能需要登录）
 
 ## 安装
 
@@ -17,6 +17,7 @@
    3. 配置Path变量，两个bin目录，%%为取JAVA_HOME变量的值
       - `%JAVA_HOME%\bin`
       - `%JAVA_HOME%\jre\bin`
+      - 把`JAVA_HOME`的`bin`目录添加到`PATH`中是为了在任意文件夹下都可以运行`java`相关指令
 3. cmd，输入`java -version`验证
 
 ## 卸载
@@ -53,8 +54,10 @@
 2. conf文件夹中settings.xml配置
 
    ```xml
+   // 下载的jar包存放在哪里
    <localRepository>D:\Environment\apache-maven-3.6.3\maven-repo</localRepository>
    
+   // 阿里云镜像加速
    <mirror>
        <id>alimaven</id>
        <name>aliyun maven</name>
